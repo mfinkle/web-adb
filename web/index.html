@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+  <title>Web ABD</title>
+
+  <link rel='shortcut icon' type='image/png' href='favicon.png' />
+
+  <link href='https://netdna.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.css' rel='stylesheet' type='text/css'>
+  <link href='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css' rel='stylesheet' type='text/css'>
+
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js'></script>
+  <script src='https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js' charset='utf-8'></script>
+
+  <style>
+    body {
+      background-color: #fff;
+      color: #000;
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 10px;
+      padding-top: 60px;
+    }
+
+    .table tr.highlight td,
+    .table tr.highlight:hover td { 
+      color: #fff;
+      background-color: #428bca;
+    }
+
+    .tab-content {
+      padding: 8px;
+    }
+
+    .screenshot {
+      width: 100%;
+    }
+
+    .logcat,
+    .shell {
+      overflow: scroll;
+      font-size: 0.7em;
+      height: 400px
+    }
+
+    .shell-input {
+      font-family: monospace;
+      width: 100%;
+    }
+
+    .info div > span:first-child {
+      font-weight: bold;
+      width: 100px;
+      display: inline-block;
+    }
+
+    .info:not(:first-child) > p {
+      padding-top: 12px;
+    }
+
+    .fa {
+      font-size:1.2em;
+    }
+  </style>
+  <script id='main-template' type='text/x-handlebars-template'>
+    <table id='device-list' class='table table-hover'>
+      <tr>
+        <th>ID</th>
+        <th>Manufacturer</th>
+        <th>Model</th>
+        <th>SDK</th>
+      </tr>
+      {{#each devices}}
+      <tr class='device-row' data-device='{{id}}'>
+        <td>{{id}}</td>
+        <td>{{manufacturer}}</td>
+        <td>{{model}}</td>
+        <td>{{sdk}}</td>
+      </tr>
+      {{/each}}
+    </table>
+    {{#each devices}}
+    <div class='container-fluid device-content' style='display: none' data-device='{{id}}'>
+      <div class='row'>
+        <div class='col-md-4'>
+          <div>
+            <i class='fa fa-camera screenshot-button' data-device='{{id}}' title='Screen shot'></i>
+            | 
+            <i class='fa fa-bolt reboot-button' data-device='{{id}}' title='Reboot'></i>
+          </div>
+          <img id='{{id}}-screenshot' class='screenshot' src='' data-device='{{id}}'/>
+        </div>
+        <div class='col-md-8'>
+          <ul class='nav nav-tabs'>
+            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-info-pane'>Info</a></li>
+            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-logcat-pane'>Logcat</a></li>
+            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-shell-pane'>Shell</a></li>
+            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-keys-pane'>Special Keys</a></li>
+          </ul>
+          <div class='tab-content'>
+            <div id='{{id}}-info-pane' class='tab-pane' data-device='{{id}}'>
+              <div id='{{id}}-network' class='info'>
+                <p>Network</p>
+                <div><span>SSID:</span><span>{{network.ssid}}</span></div>
+                <div><span>Connected:</span><span>{{network.connected}}</span></div>
+              </div>
+              <div id='{{id}}-battery' class='info'>
+                <p>Battery</p>
+                <div><span>Powered:</span><span>{{battery.plugged}}</span></div>
+                <div><span>Level:</span><span>{{battery.level}}</span></div>
+                <div><span>Status:</span><span>{{formatStatus battery.status}}</span></div>
+                <div><span>Health:</span><span>{{formatHealth battery.health}}</span></div>
+              </div>
+              <div id='{{id}}-screen' class='info'>
+                <p>Screen</p>
+                <div><span>Density:</span><span>{{screen.density}}</span></div>
+                <div><span>Width:</span><span>{{screen.width}}</span></div>
+                <div><span>Height:</span><span>{{screen.height}}</span></div>
+                <div><span>Orientation:</span><span>{{screen.orientation}}</span></div>
+              </div>
+            </div>
+            <div id='{{id}}-logcat-pane' class='tab-pane' data-device='{{id}}'>
+              <div>
+                <i class='fa fa-file-text logcat-button' data-device='{{id}}' title='Logcat'></i>
+                | 
+                <i class='fa fa-trash logcat-clear-button' data-device='{{id}}' title='Clear'></i>
+              </div>
+              <pre id='{{id}}-logcat' class='logcat'></pre>
+            </div>
+            <div id='{{id}}-shell-pane' class='tab-pane' data-device='{{id}}'>
+              <input id='{{id}}-shell-input' class='shell-input' data-device='{{id}}'/>
+              <pre id='{{id}}-shell-output' class='shell'></pre>
+            </div>
+            <div id='{{id}}-keys-pane' class='tab-pane' data-device='{{id}}'>
+                <i class='fa fa-home device-special-key' data-device='{{id}}' data-key='3' title='Home'></i>
+                | 
+                <i class='fa fa-chevron-left device-special-key' data-device='{{id}}' data-key='4' title='Back'></i>
+                | 
+                <i class='fa fa-th device-special-key' data-device='{{id}}' data-key='187' title='App Switch'></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </script>
+
+</head>
+
+<body>
+  <div class='navbar navbar-default navbar-fixed-top'>
+    <div class='container-fluid'>
+      <div class='navbar-header'>
+        <p class='navbar-brand'>Web ADB</p>
+      </div>
+    </div>
+  </div>
+
+  <div class='container-fluid'>
+    <div id='grid' class='col-sm-8 col-sm-offset-2 col-md-9 col-md-offset-1 main'></div>
+  </div>
+
+  <script>
+    $(function() {
+      Handlebars.registerHelper('formatStatus', function(status) {
+        var status_strings = ['Unknown', 'Charging', 'Discharging', 'Not charging', 'Full'];
+        return status_strings[status - 1];
+      });
+
+      Handlebars.registerHelper('formatHealth', function(health) {
+        var health_strings = ['Unknown', 'Good', 'Overheated', 'Dead', 'Over voltage', 'Unspecified failure', 'Cold'];
+        return health_strings[health - 1];
+      });
+
+
+      $.ajax({
+        url: 'devices',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+          var context = { devices: data };
+          var source = $('#main-template').html();
+          var template = Handlebars.compile(source);
+          var html = template(context);
+          $('#grid').html(html);
+
+          $('.device-row').click(function() {
+            $(this).addClass('highlight').siblings().removeClass('highlight');
+
+            var device = $(this).data('device');
+
+            $('.device-content:not([data-device=' + device + '])').hide();
+            $('.device-content[data-device=' + device + ']').show();
+
+            if ($('.nav-item.active[data-device=' + device + ']').length == 0) {
+              $('.nav-item[data-device=' + device + ']:first-child a').tab('show');
+            }
+          });
+
+          $('.screenshot-button').click(function() {
+            var device = $(this).data('device');
+            $('#' + device + '-screenshot').attr('src', '');
+            $('#' + device + '-screenshot').attr('src', 'screenshot/' + device + '?rnd=' + Math.random());
+          });
+
+          $('.logcat-button').click(function() {
+            var device = $(this).data('device');
+            $('#' + device + '-logcat').html('');
+            $.ajax({
+              url: 'logcat/' + device,
+              type: 'GET',
+              dataType: 'text',
+              success: function(logtext) {
+                $('#' + device + '-logcat').html(logtext);
+              }
+            });
+          });
+
+          $('.logcat-clear-button').click(function() {
+            var device = $(this).data('device');
+            $('#' + device + '-logcat').html('');
+          });
+
+          $('.reboot-button').click(function() {
+            if (!confirm('Do you really want to reboot this device?')) {
+              return;
+            }
+
+            var device = $(this).data('device');
+            $('#' + device + '-screenshot').attr('src', '');
+            $('#' + device + '-logcat').html('');
+
+            $.ajax({
+              url: 'reboot',
+              type: 'POST',
+              data: JSON.stringify({ 'device': device }),
+              processData: false,
+              dataType: 'text',
+              success: function(result) {
+                console.log(result);
+              }
+            });
+          });
+
+          $('.device-special-key').click(function() {
+            var device = $(this).data('device');
+            var key = $(this).data('key');
+
+            $.ajax({
+              url: 'key',
+              type: 'POST',
+              data: JSON.stringify({ 'device': device, 'key': key }),
+              processData: false,
+              dataType: 'text',
+              success: function(result) {
+                console.log(result);
+              }
+            });
+          });
+
+          $('.shell-input').keypress(function(e) {
+            if (e.which == 13) {
+              var device = $(this).data('device');
+              input = $('#' + device + '-shell-input').val();
+              $('#' + device + '-shell-output').html('');
+
+              $.ajax({
+                url: 'shell',
+                type: 'POST',
+                data: JSON.stringify({ 'device': device, 'command': input }),
+                processData: false,
+                dataType: 'text',
+                success: function(result) {
+                  $('#' + device + '-shell-output').html(result);
+                  console.log(result);
+                }
+              });
+            }
+          });
+
+          $('.screenshot').mousedown(function(e){
+            var offset = $(this).offset(); 
+            var relX = e.pageX - offset.left;
+            var relY = e.pageY - offset.top;
+            var elem = e.currentTarget;
+            var multiX = elem.naturalWidth / elem.width;
+            var multiY = elem.naturalHeight / elem.height;
+            var device = $(this).data('device');
+
+            $.ajax({
+              url: 'tap',
+              type: 'POST',
+              data: JSON.stringify({ 'device': device, 'x': (relX * multiX), 'y': (relY * multiY) }),
+              processData: false,
+              dataType: 'text',
+              success: function(result) {
+                console.log(result);
+                if (result == 'OK') {
+                  setTimeout(function() {
+                    $('.fa-camera[data-device=' + device + ']').trigger('click');
+                  }, 1500);
+                }
+              }
+            });
+          });
+        }
+      });
+    })
+  </script>
+</body>
+</html>

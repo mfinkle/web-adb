@@ -12,6 +12,8 @@ The following are required on the host machine running Web ADB:
 * Run `python <path-to-web-adb>/server.py --port=8888 --adb-path=<path-to-android-sdk>/platform-tools/adb`
 * Open `http://localhost:8888` in a browser
 
+![screenshot](web-adb-screenshot.png)
+
 ## Details
 I tried to keep this as minimal as possible. A single Python file acts as a very simple API server. In addition to several API routes, hiting the root will return a simple single-page webapp.
 
@@ -21,15 +23,83 @@ I tried to keep this as minimal as possible. A single Python file acts as a very
 * `--cert-file` the path to a `PEM` file you want to use to enable `HTTPS` support
 
 ### Routes
-* `/` (`GET`, `text/html`): Single-page webapp
-* `/devices` (`GET`, `application/json`): 
-* `/screenshot/:device_id` (`GET`, `image/png`): 
-* `/logcat/:device_id` (`GET`, `text/plain`): 
-* `/info/:device_id` (`GET`, `application/json`): 
-* `/key` (`POST`, `text/plain`): 
-* `/tap` (`POST`, `text/plain`):
-* `/shell` (`POST`, `text/plain`):
-* `/reboot` (`POST`, `text/plain`):
+#### `/` (`GET`, `text/html`)
+returns the single-page webapp
+
+#### `/devices` (`GET`, `application/json`)
+returns a `JSON` array containing a `JSON` `device` object each connected device
+```
+[
+  {
+    "id": "<device-id>",
+    "network": {
+      "connected": (true|false),
+      "ssid": "<wifi-name>"
+    },
+    "battery": {
+      "status": "<range: 1 to 5>",
+      "level": "<charge level>",
+      "health": "<range: 1 to 7>",
+      "plugged": "(USB|AC)"
+    },
+    "screen": {
+      "width": "<XXXpx>",
+      "height": "<YYYpx>",
+      "density": "<integer density>",
+      "orientation": "0|1"
+    },
+    "model": "<model-name>",
+    "manufacturer": "<manufacturer-name>",
+    "sdk": "<integer SDK level>"
+  },
+  {...}
+]
+```
+
+#### `/screenshot/:device_id` (`GET`, `image/png`)
+returns a PNG of the device screen
+
+#### `/logcat/:device_id` (`GET`, `text/plain`)
+returns a simple text dump of the logcat
+
+#### `/info/:device_id` (`GET`, `application/json`)
+returns a `JSON` `device` object for the given device
+
+#### `/key` (`POST`, `text/plain`): 
+takes a `JSON` object and returns a plain text status
+```
+{
+  "device": "<device-id>",
+  "key": "<key-code>"
+}
+```
+
+#### `/tap` (`POST`, `text/plain`):
+takes a `JSON` object and returns a plain text status
+```
+{
+  "device": "<device-id>",
+  "x": "<x-location>",
+  "y": "<y-location>"
+}
+```
+
+#### `/shell` (`POST`, `text/plain`):
+takes a `JSON` object and returns a plain text status
+```
+{
+  "device": "<device-id>",
+  "command": "<shell-command>"
+}
+```
+
+#### `/reboot` (`POST`, `text/plain`):
+takes a `JSON` object and returns a plain text status
+```
+{
+  "device": "<device-id>"
+}
+```
 
 ## Future Ideas
 I threw this project together quickly to scratch a specific itch. Here are some ideas I'd like to think about for the future:

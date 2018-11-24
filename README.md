@@ -14,6 +14,12 @@ The following are required on the host machine running Web ADB:
 
 ![screenshot](web-adb-screenshot.png)
 
+## Basic Usage
+* Connected devices are listed in the table
+* Selecting a device will display a panel below the table with more capabilities.
+* The action buttons/images have hover text to help you guess what they do.
+* Clicking on a screenshot will send a `tap` to the device and refresh the screeshot.
+
 ## Details
 I tried to keep this as minimal as possible. A single Python file acts as a very simple API server. In addition to several API routes, hiting the root will return a simple single-page webapp.
 
@@ -66,7 +72,7 @@ returns a simple text dump of the logcat
 returns a `JSON` `device` object for the given device
 
 #### `/key` (`POST`, `text/plain`): 
-takes a `JSON` object and returns a plain text status
+executes a keypress on the given device. takes a `JSON` object and returns a plain text status
 ```
 {
   "device": "<device-id>",
@@ -75,7 +81,7 @@ takes a `JSON` object and returns a plain text status
 ```
 
 #### `/tap` (`POST`, `text/plain`):
-takes a `JSON` object and returns a plain text status
+executes a tap on the given device at the given coords. takes a `JSON` object and returns a plain text status
 ```
 {
   "device": "<device-id>",
@@ -85,7 +91,7 @@ takes a `JSON` object and returns a plain text status
 ```
 
 #### `/shell` (`POST`, `text/plain`):
-takes a `JSON` object and returns a plain text status
+executes a shell command on the given device. takes a `JSON` object and returns a plain text status
 ```
 {
   "device": "<device-id>",
@@ -94,7 +100,7 @@ takes a `JSON` object and returns a plain text status
 ```
 
 #### `/reboot` (`POST`, `text/plain`):
-takes a `JSON` object and returns a plain text status
+reboots the given device. takes a `JSON` object and returns a plain text status
 ```
 {
   "device": "<device-id>"

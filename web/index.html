@@ -264,6 +264,11 @@
               dataType: 'text',
               success: function(result) {
                 console.log(result);
+                if (result == 'OK') {
+                  setTimeout(function() {
+                    $('.fa-camera[data-device=' + device + ']').trigger('click');
+                  }, 1500);
+                }
               }
             });
           });

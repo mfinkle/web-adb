@@ -196,6 +196,19 @@ def post_key(handler):
             print(err)
     return 'OK'
 
+def post_text(handler):
+    payload = handler.get_payload()
+    if 'device' in payload and 'text' in payload:
+        device = payload['device']
+        text = payload['text']
+        text = text.replace(' ', '%s')
+        print(device + ' : ' + str(text))
+        (rc, _, err) = _adb(['shell', 'input', 'text', '"' + text + '"'], device=device)
+        print('text done ' + str(rc))
+        if rc != 0:
+            print(err)
+    return 'OK'
+
 def post_tap(handler):
     payload = handler.get_payload()
     if 'device' in payload and 'x' in payload and 'y' in payload:
@@ -241,6 +254,7 @@ class RESTRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             r'^/logcat': {'GET': get_logcat, 'media_type': 'text/plain'},
             r'^/info': {'GET': get_info, 'media_type': 'application/json'},
             r'^/key$': {'POST': post_key, 'media_type': 'text/plain'},
+            r'^/text$': {'POST': post_text, 'media_type': 'text/plain'},
             r'^/tap$': {'POST': post_tap, 'media_type': 'text/plain'},
             r'^/shell$': {'POST': post_shell, 'media_type': 'text/plain'},
             r'^/reboot$': {'POST': post_reboot, 'media_type': 'text/plain'}

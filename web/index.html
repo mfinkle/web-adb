@@ -44,7 +44,8 @@
       height: 400px
     }
 
-    .shell-input {
+    .shell-input,
+    .text-input {
       font-family: monospace;
       width: 100%;
     }
@@ -96,7 +97,7 @@
             <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-info-pane'>Info</a></li>
             <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-logcat-pane'>Logcat</a></li>
             <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-shell-pane'>Shell</a></li>
-            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-keys-pane'>Special Keys</a></li>
+            <li class='nav-item' data-device='{{id}}'><a class='nav-link' data-toggle='tab' data-target='#{{id}}-input-pane'>Input</a></li>
           </ul>
           <div class='tab-content'>
             <div id='{{id}}-info-pane' class='tab-pane' data-device='{{id}}'>
@@ -132,12 +133,25 @@
               <input id='{{id}}-shell-input' class='shell-input' data-device='{{id}}'/>
               <pre id='{{id}}-shell-output' class='shell'></pre>
             </div>
-            <div id='{{id}}-keys-pane' class='tab-pane' data-device='{{id}}'>
+            <div id='{{id}}-input-pane' class='tab-pane' data-device='{{id}}'>
+              <div class='info'>
+                <p>Special keys:</p>
                 <i class='fa fa-home device-special-key' data-device='{{id}}' data-key='3' title='Home'></i>
                 | 
                 <i class='fa fa-chevron-left device-special-key' data-device='{{id}}' data-key='4' title='Back'></i>
                 | 
                 <i class='fa fa-th device-special-key' data-device='{{id}}' data-key='187' title='App Switch'></i>
+                | 
+                <span class='device-special-key' data-device='{{id}}' data-key='66' title='Enter'>⏎</span>
+                | 
+                <span class='device-special-key' data-device='{{id}}' data-key='67' title='Backspace'>⌫</span>
+                | 
+                <span class='device-special-key' data-device='{{id}}' data-key='61' title='Tab'>⇥</span>
+              </div>
+              <div class='info'>
+                <p>Send text:</p>
+                <input id='{{id}}-text-input' class='text-input' data-device='{{id}}'/>
+              </div>
             </div>
           </div>
         </div>
@@ -255,8 +269,37 @@
               dataType: 'text',
               success: function(result) {
                 console.log(result);
+                if (result == 'OK') {
+                  setTimeout(function() {
+                    $('.fa-camera[data-device=' + device + ']').trigger('click');
+                  }, 1500);
+                }
               }
             });
+          });
+
+          $('.text-input').keypress(function(e) {
+            if (e.which == 13) {
+              var device = $(this).data('device');
+              input = $('#' + device + '-text-input').val();
+              $('#' + device + '-text-output').html('');
+
+              $.ajax({
+                url: 'text',
+                type: 'POST',
+                data: JSON.stringify({ 'device': device, 'text': input }),
+                processData: false,
+                dataType: 'text',
+                success: function(result) {
+                  console.log(result);
+                  if (result == 'OK') {
+                    setTimeout(function() {
+                      $('.fa-camera[data-device=' + device + ']').trigger('click');
+                    }, 1500);
+                  }
+                }
+              });
+            }
           });
 
           $('.shell-input').keypress(function(e) {
